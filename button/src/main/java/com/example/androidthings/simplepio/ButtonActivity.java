@@ -17,6 +17,13 @@
 package com.example.androidthings.simplepio;
 
 import android.app.Activity;
+
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.things.pio.Gpio;
 import com.google.android.things.pio.GpioCallback;
 import com.google.android.things.pio.PeripheralManagerService;
@@ -24,6 +31,9 @@ import android.os.Bundle;
 import android.util.Log;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 /**
  * Sample usage of the Gpio API that logs when a button is pressed.
@@ -34,10 +44,19 @@ public class ButtonActivity extends Activity {
 
     private Gpio mButtonGpio;
 
+    private List<Date> presses;
+
+    public ButtonActivity(){
+        this.presses= new ArrayList<>();
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.i(TAG, "Starting ButtonActivity");
+        Log.i(TAG, TAG);
+        final RequestQueue queue = Volley.newRequestQueue(this);
+        final String baseUrl = "http://requestb.in/zqgdobzq";
 
         PeripheralManagerService service = new PeripheralManagerService();
         try {
@@ -49,6 +68,27 @@ public class ButtonActivity extends Activity {
                 @Override
                 public boolean onGpioEdge(Gpio gpio) {
                     Log.i(TAG, "GPIO changed, button pressed");
+                    presses.add(new Date());
+                    System.out.println(presses);
+                    System.out.println(presses.size());
+                    System.out.println("Jesper");
+                    // Request a string response from the provided URL.
+                    String url = baseUrl + "?time=" + new Date().toString();
+                    StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
+                            new Response.Listener<String>() {
+                                @Override
+                                public void onResponse(String response) {
+                                    // Display the first 500 characters of the response string.
+                                    Log.i(TAG, "Response is: "+ response);
+                                }
+                            }, new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            Log.i(TAG, "That didn't work!");
+                        }
+                    });
+                    // Add the request to the RequestQueue.
+                    queue.add(stringRequest);
                     // Return true to continue listening to events
                     return true;
                 }
